@@ -26,13 +26,7 @@ class Api::ProductsController < ApplicationController
 
   def create
     @product = Product.new(product_params)
-    if @product.price > 5000
-      @product.approval_queues.find_or_initialize_by(status: 'pending')
-    end
-
-    if @product.price > 10000
-      render json: { errors: ['Product price cannot exceed $10,000.'] }, status: :unprocessable_entity
-    elsif @product.save
+    if @product.save
       render json: @product, status: :created
     else
       render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
@@ -40,14 +34,7 @@ class Api::ProductsController < ApplicationController
   end
 
   def update
-    new_price = params[:price].to_i
-    if new_price > 10000
-      render json: { errors: ['Product price cannot exceed $10,000.'] }, status: :unprocessable_entity
-      return
-    elsif @product.price_increase_over_threshold?(new_price)
-      @product.approval_queues.find_or_initialize_by(status: 'pending')
-    end
-
+    @product.price = product_params[:price]
     if @product.update(product_params)
       render json: @product
     else
@@ -57,7 +44,7 @@ class Api::ProductsController < ApplicationController
   end
 
   def destroy
-    push_to_approval_queue
+    @product.push_to_approval_queue
     @product.update(status: 'inactive')
     render json: { message: 'Product deleted successfully' }
   end
@@ -70,10 +57,6 @@ class Api::ProductsController < ApplicationController
 
   def product_params
     params.permit(:product_name, :price, :status)
-  end
-
-  def push_to_approval_queue
-    @product.approval_queues.find_or_create_by(status: 'pending')
   end
 
 end
