@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   namespace :api do
-    resources :products, only: [:index, :create, :update, :destroy] do
+    resources :products, except: [:show, :new, :edit] do
       collection do
         get 'search'
         get 'approval_queue'
