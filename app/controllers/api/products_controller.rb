@@ -1,4 +1,5 @@
 class Api::ProductsController < ApplicationController
+  before_action :set_product, only: [:update]
 
   def index
     @products = Product.where(status: 'active').order(created_at: :desc)
@@ -39,7 +40,33 @@ class Api::ProductsController < ApplicationController
     end
   end
 
+  def update
+    new_price = params[:price].to_i
+    if @product.price_increase_over_threshold?(new_price)
+      @product.assign_attributes(update_product_params)
+      @product.status = 'pending'
+      @product.approval_queues.build(status: 'pending')
+    else
+      @product.update(update_product_params)
+    end
+
+    if @product.save
+      render json: @product
+    else
+      render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   private
+
+  def set_product
+    @product = Product.find(params[:id])
+  end
+
+  def update_product_params
+    params.permit(:product_name, :price, :status)
+  end
+
   def product_params
     params.permit(:product_name, :price)
   end
