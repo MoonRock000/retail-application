@@ -23,4 +23,25 @@ class Api::ProductsController < ApplicationController
     render json: @products
   end
 
+  def create
+    @product = Product.new(product_params)
+    if @product.price > 5000
+      @product.status = 'pending'
+      @product.approval_queues.build(status: 'pending')
+    end
+
+    if @product.price > 10000
+      render json: { errors: ['Product price cannot exceed $10,000.'] }, status: :unprocessable_entity
+    elsif @product.save
+      render json: @product, status: :created
+    else
+      render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  private
+  def product_params
+    params.permit(:product_name, :price)
+  end
+
 end
