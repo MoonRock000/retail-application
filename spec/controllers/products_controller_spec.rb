@@ -36,7 +36,7 @@ RSpec.describe Api::ProductsController, type: :controller do
       product1 = create(:product, product_name: 'Test Product 1', price: 100, created_at: 1.day.ago)
       product2 = create(:product, product_name: 'Test Product 2', price: 200, created_at: 2.days.ago)
       sleep 3
-      get :search, params: { productName: 'Test Product 1', minPrice: 50, maxPrice: 150, minPostedDate: 3.days.ago, maxPostedDate: 1.day.ago }
+      get :search, params: { product_name: 'Test Product 1', min_price: 50, max_price: 150, min_posted_date: 3.days.ago, max_posted_date: 1.day.ago }
       expect(response).to have_http_status(:success)
       products = JSON.parse(response.body)
       expect(products.length).to eq(1)
@@ -55,7 +55,7 @@ RSpec.describe Api::ProductsController, type: :controller do
     end
 
     it 'returns an empty array when no matching products are found' do
-      get :search, params: { productName: 'Non-existent Product' }
+      get :search, params: { product_name: 'Non-existent Product' }
       expect(response).to have_http_status(:success)
 
       products = JSON.parse(response.body)

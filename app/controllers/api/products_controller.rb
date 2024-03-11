@@ -7,11 +7,11 @@ class Api::ProductsController < ApplicationController
   end
 
   def search
-    product_name = params[:productName]
-    min_price = params[:minPrice]
-    max_price = params[:maxPrice]
-    min_posted_date = params[:minPostedDate]
-    max_posted_date = params[:maxPostedDate]
+    product_name = params[:product_name]
+    min_price = params[:min_price]
+    max_price = params[:max_price]
+    min_posted_date = params[:min_posted_date]
+    max_posted_date = params[:max_posted_date]
 
     query = Product.all
     query = query.where("product_name = ?", product_name) if product_name.present?
