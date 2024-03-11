@@ -17,6 +17,12 @@ Follow these steps to set up and run the project on your local machine.
 
 >git clone https://github.com/MoonRock000/retail-application.git
 
+### 2. Install the bundler
+
+Install the bundler using following command:
+
+>bundle install
+
 ### 2. Create and Setup the Database
 Run the following commands to create and set up the database.
 ```
