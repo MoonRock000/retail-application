@@ -26,7 +26,7 @@ class Product < ApplicationRecord
 
 
   def price_increase_over_threshold?(old_price, new_price)
-      percentage_increase = ((new_price - old_price).to_f / old_price) * 100
+    percentage_increase = ((new_price - old_price).to_f / old_price) * 100
     percentage_increase > 50
   end
 
