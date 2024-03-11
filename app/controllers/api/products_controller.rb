@@ -2,7 +2,7 @@ class Api::ProductsController < ApplicationController
   before_action :set_product, only: [:update, :destroy]
 
   def index
-    @products = Product.where(status: 'active').order(created_at: :desc)
+    @products = Product.active.order(created_at: :desc)
     render json: @products
   end
 
