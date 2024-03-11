@@ -1,7 +1,9 @@
 class Product < ApplicationRecord
-  has_many :approval_queues
+  has_many :approval_queues, dependent: :destroy
+  validates :price, numericality: { less_than_or_equal_to: 10000 }
+  
   enum status: {
-    pending: 0,
+    inactive: 0,
     active: 1,
   } 
 

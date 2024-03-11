@@ -1,5 +1,5 @@
 class Api::ProductsController < ApplicationController
-  before_action :set_product, only: [:update]
+  before_action :set_product, only: [:update, :destroy]
 
   def index
     @products = Product.where(status: 'active').order(created_at: :desc)
@@ -27,8 +27,7 @@ class Api::ProductsController < ApplicationController
   def create
     @product = Product.new(product_params)
     if @product.price > 5000
-      @product.status = 'pending'
-      @product.approval_queues.build(status: 'pending')
+      @product.approval_queues.find_or_initialize_by(status: 'pending')
     end
 
     if @product.price > 10000
@@ -42,18 +41,51 @@ class Api::ProductsController < ApplicationController
 
   def update
     new_price = params[:price].to_i
-    if @product.price_increase_over_threshold?(new_price)
-      @product.assign_attributes(update_product_params)
-      @product.status = 'pending'
-      @product.approval_queues.build(status: 'pending')
-    else
-      @product.update(update_product_params)
+    if new_price > 10000
+      render json: { errors: ['Product price cannot exceed $10,000.'] }, status: :unprocessable_entity
+      return
+    elsif @product.price_increase_over_threshold?(new_price)
+      @product.approval_queues.find_or_initialize_by(status: 'pending')
     end
 
-    if @product.save
+    if @product.update(product_params)
       render json: @product
     else
       render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
+    end
+    
+  end
+
+  def destroy
+    push_to_approval_queue
+    @product.update(status: 'inactive')
+    render json: { message: 'Product deleted successfully' }
+  end
+
+  def approval_queue
+    approval_queue_products = Product.joins(:approval_queues)
+                                     .where(approval_queues: { status: 'pending' })
+                                     .order('approval_queues.created_at ASC')
+    render json: approval_queue_products
+  end
+
+  def approve_from_approval_queue
+    approval_queue_product = ApprovalQueue.find(params[:approval_id])
+
+    if approval_queue_product.approve
+      render json: { message: 'Product approved successfully' }
+    else
+      render json: { errors: approval_queue_product.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def reject_from_approval_queue
+    approval_queue_product = ApprovalQueue.find(params[:approval_id])
+
+    if approval_queue_product.reject
+      render json: { message: 'Product rejected successfully' }
+    else
+      render json: { errors: approval_queue_product.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
@@ -63,12 +95,12 @@ class Api::ProductsController < ApplicationController
     @product = Product.find(params[:id])
   end
 
-  def update_product_params
+  def product_params
     params.permit(:product_name, :price, :status)
   end
 
-  def product_params
-    params.permit(:product_name, :price)
+  def push_to_approval_queue
+    @product.approval_queues.find_or_create_by(status: 'pending')
   end
 
 end
