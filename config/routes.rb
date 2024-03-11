@@ -1,11 +1,16 @@
 Rails.application.routes.draw do
+  get 'approval_queues/approve'
+  get 'approval_queues/reject'
   namespace :api do
     resources :products, except: [:show, :new, :edit] do
       collection do
         get 'search'
-        get 'approval_queue'
-        put 'approval-queue/:approval_id/approve', to: 'products#approve_from_approval_queue'
-        put 'approval-queue/:approval_id/reject', to: 'products#reject_from_approval_queue'
+        resources :approval_queues, only: [:index] do
+          member do
+            put 'approve'
+            put 'reject'
+          end
+        end
       end
     end
   end
